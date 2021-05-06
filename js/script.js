@@ -1,8 +1,8 @@
-const nameInput = document.querySelector('#name');
-const otherJobRoleInput = document.querySelector('#other-job-role');
-const userTitleSelect = document.querySelector('#title');
-const colorSelect = document.querySelector('#color');
-const designSelect = document.querySelector('#design');
+const nameInput = document.getElementById('name');
+const otherJobRoleInput = document.getElementById('other-job-role');
+const userTitleSelect = document.getElementById('title');
+const colorSelect = document.getElementById('color');
+const designSelect = document.getElementById('design');
 
 // start by giving focus to the first (top left) input on the form
 nameInput.focus();
@@ -89,8 +89,10 @@ designSelect.addEventListener('change', (event) => {
     colorSelect.removeAttribute('disabled');
 });
 
+// step 6
+
 // select the fieldset containing all the activity checkboxes
-const activitiesBox = document.querySelector('#activities');
+const activitiesBox = document.getElementById('activities');
 
 activitiesBox.addEventListener('change', (event) => {
     if(event.target.tagName='input') {
@@ -106,7 +108,27 @@ activitiesBox.addEventListener('change', (event) => {
     }
 });
 
+// step 7
+// set the credit card option as the default
+const creditCardOption = payment.querySelector('option[value="credit-card"]');
+creditCardOption.setAttribute('selected', true);
 
+// The function selectPaymentMethod hides all payment method input & info 
+// fields except for the one that has an id provided by the argument
+function selectPaymentMethod(paymentId) {
+    // hide all fields
+    document.getElementById('credit-card').style.display = 'none';
+    document.getElementById('paypal').style.display = 'none';
+    document.getElementById('bitcoin').style.display = 'none';
 
+    // show selected field again
+    document.getElementById(paymentId).style.display = '';   
+}
 
+// Listen for payment method changes
+payment.addEventListener('change', (event) => {
+    selectPaymentMethod(event.target.value);
+});
 
+// By default, we select the credit card payment method
+selectPaymentMethod('credit-card');
