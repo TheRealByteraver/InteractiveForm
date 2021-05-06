@@ -68,6 +68,7 @@ designSelect.addEventListener('change', (event) => {
     // get a list of all the color <option> elements
     const colorOptions = colorSelect.querySelectorAll('option');
 
+    // only add the 'selected' attribute to one available color
     let selected = false;
 
     // show the ones that correspond to the user-choosen theme
@@ -87,6 +88,25 @@ designSelect.addEventListener('change', (event) => {
     // make the updated color selection section available again
     colorSelect.removeAttribute('disabled');
 });
+
+// select the fieldset containing all the activity checkboxes
+const activitiesBox = document.querySelector('#activities');
+
+activitiesBox.addEventListener('change', (event) => {
+    if(event.target.tagName='input') {
+        let totalCost = 0;
+        const inputs = activitiesBox.querySelectorAll('input');
+        for(let i = 0; i < inputs.length; i++) {
+            if(inputs[i].checked) {
+                totalCost += parseInt(inputs[i].dataset.cost);
+            }
+        }
+        const activitiesCost = activitiesBox.querySelector('#activities-cost');
+        activitiesCost.innerText = `Total: $${totalCost}`;
+    }
+});
+
+
 
 
 
