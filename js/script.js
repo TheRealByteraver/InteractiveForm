@@ -1,3 +1,4 @@
+const form = document.querySelector('form');
 const nameInput = document.getElementById('name');
 const otherJobRoleInput = document.getElementById('other-job-role');
 const userTitleSelect = document.getElementById('title');
@@ -92,12 +93,12 @@ designSelect.addEventListener('change', (event) => {
 
 // step 6
 // select the fieldset containing all the activity checkboxes
-const activitiesBox = document.getElementById('activities');
+const activitiesFieldset = document.getElementById('activities');
 
 // This function calculates the total cost based on the checked courses
 function getTotalCost() {
     let totalCost = 0;
-    const inputs = activitiesBox.querySelectorAll('input');
+    const inputs = activitiesFieldset.querySelectorAll('input');
     for(let i = 0; i < inputs.length; i++) {
         if(inputs[i].checked) {
             totalCost += parseInt(inputs[i].dataset.cost);
@@ -108,7 +109,7 @@ function getTotalCost() {
 
 // The following event listener recalculates and displays the total cost each
 // time a checkbox is checked or unchecked
-activitiesBox.addEventListener('change', (event) => {    
+activitiesFieldset.addEventListener('change', (event) => {    
     if(event.target.tagName === 'INPUT') {
         let totalCost = getTotalCost();
         const activitiesCost = document.getElementById('activities-cost');
@@ -164,17 +165,13 @@ payment.addEventListener('change', (event) => {
 selectPaymentMethod('credit-card');
 
 // step 8
-const form = document.querySelector('form');
-
 // The form submit event listener does a full validation of the input fields
 // and prevents submission if some information is wrong or missing
-form.addEventListener('submit', (event) => { // correct event == submit !!! DEBUG!!
+form.addEventListener('submit', (event) => {
 
-    /*
-      **Note**: these little helper functions check if the information was
-      entered correctly in the form input fields. They return true on success
-      or false if there is missing/ wrong information
-    */
+    // **Note**: these little helper functions check if the information was
+    // entered correctly in the form input fields. They return true on success
+    // or false if there is missing/ wrong information
 
     // A name should at least contain two characters, excluding spaces
     function isValidName() {
@@ -198,22 +195,7 @@ form.addEventListener('submit', (event) => { // correct event == submit !!! DEBU
    // The isValidCreditCard function checks if all the credit card information
    // was entered correctly
     function isValidCreditCard() {
-        // // check credit card expiration month - not required
-        // const ccMonthSelect = document.getElementById('exp-month');
-        // const selectedMonthIndex = ccMonthSelect.selectedIndex;
-        // const ccMonth = ccMonthSelect.children[selectedMonthIndex].value;
-        // const isValidccMonth = !isNaN(ccMonth);
-
-        // // check credit card expiration year - not required
-        // const ccYearSelect = document.getElementById('exp-year');
-        // const selectedYearIndex = ccYearSelect.selectedIndex;
-        // const ccYear = ccYearSelect.children[selectedYearIndex].value;
-        // const isValidccYear = !isNaN(ccYear);
-
         return (
-        // isValidccMonth &&
-        // isValidccYear &&
-
         // a creditcard nr should be between 13 and 16 characters long    
         /^\d{13,16}$/.test(document.getElementById('cc-num').value) &&
 
@@ -224,36 +206,45 @@ form.addEventListener('submit', (event) => { // correct event == submit !!! DEBU
         /^\d{3}$/.test(document.getElementById('cvv').value) 
         );
     }
-
-    // console.log('--------------------------------------------------');
-    // console.log('isValidName: ' + isValidName());
-    // console.log('isValidEmail: ' + isValidEmail());
-    // console.log('AreActivitiesSelected: ' + AreActivitiesSelected());
-
+    // Check if the user filled in all the mandatory fields correctly
     let isReadyForSubmission = 
         isValidName() &&
         isValidEmail() &&
         AreActivitiesSelected();
 
+    // perform extra credit card check if that payment option was selected
     if(getPaymentMethodId() === 'credit-card') {
-        console.log('The credit card payment option was selected');
         isReadyForSubmission = isReadyForSubmission && isValidCreditCard();
-    } else {
-        console.log('The credit card payment option was NOT selected');
-    }
-    console.log('isReadyForSubmission = ' + isReadyForSubmission);
+    } 
 
     // The user did not enter all information correctly, prevent submission
     if(!isReadyForSubmission) {
         event.preventDefault();
     }
-
-    /*
-    Note:
-        Only validate the three credit card fields if "credit card" is the 
-        selected payment option.
-        Only call `preventDefault` on the `event` object if one or more of
-        the required fields is invalid.
-    */
 });
 
+// step 9
+// The function addFocusBlurEventListeners adds focus and blur events to the 
+// inputs inside the <fieldset> with the id 'activities'. We need to add the
+// event listeners to each individual input element separately because the focus 
+// and blur events do not bubble up to the parent elements.
+function addFocusBlurEventListeners() {
+    const activitiesBoxArray = document.getElementById('activities-box').children;
+    for(let i = 0; i < activitiesBoxArray.length; i++) {
+        const input = activitiesBoxArray[i].getElementsByTagName('input')[0];
+
+        // add the focus event listener
+        input.addEventListener('focus', (event) => {   
+            const label = event.target.parentElement;
+            label.className = 'focus';
+        });
+        
+        // add the blur event listener
+        input.addEventListener('blur', (event) => {   
+            const label = event.target.parentElement;
+            label.className = '';            
+        });
+    }
+}
+// call the above function once to add the event listeners
+addFocusBlurEventListeners();
