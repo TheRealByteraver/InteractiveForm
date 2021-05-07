@@ -10,19 +10,15 @@ const creditCardNumInput = document.getElementById('cc-num');
 const creditCardZipInput = document.getElementById('zip');
 const creditCardCVVInput = document.getElementById('cvv');
 
-
-
 // start by giving focus to the first (top left) input on the form
 nameInput.focus();
 
-// hide the "Other Job Role" input till its needed
+// hide the "Other Job Role" input field till its needed
 otherJobRoleInput.style.visibility = 'hidden';
 
-/* 
-    The following event listener checks if the 'Other' Job Role was selected
-    among the available Job Roles. If so, it makes the 'otherJobRoleInput'
-    element visible again. If not, it hides it again
-*/
+// The following event listener checks if the 'Other' Job Role was selected
+// among the available Job Roles. If so, it makes the 'otherJobRoleInput'
+// element visible again. If not, it hides it again
 userTitleSelect.addEventListener('change', (event) => {
     if(event.target.value === 'other') {
         otherJobRoleInput.style.visibility = '';
@@ -36,21 +32,10 @@ userTitleSelect.addEventListener('change', (event) => {
 // Initially disable the color select element
 colorSelect.setAttribute('disabled', true);
 
-/* 
-    These are the innerText values of the color <option> elements:
-
-    Cornflower Blue (JS Puns shirt only)
-    Dark Slate Grey (JS Puns shirt only)
-    Gold            (JS Puns shirt only)
-    Tomato          (I love JS shirt only)
-    Steel Blue      (I love JS shirt only)
-    Dim Grey        (I love JS shirt only)
-
-    The function removeColorAvailabilityInfo strips the extra 
-    availability information such as '(JS Puns shirt only)' and
-    leaves only the color itself (e.g. 'Cornflower Blue').
-*/
-const removeColorAvailabilityInfo = () => {
+// The function removeColorAvailabilityInfo strips the extra 
+// availability information such as '(JS Puns shirt only)' and
+// leaves only the color itself (e.g. 'Cornflower Blue').
+function removeColorAvailabilityInfo() {
 
     // isolate the color from the string in $1
     const regex = /((\w+ ){1,})\s*(\(.*?\))/
@@ -71,6 +56,9 @@ const removeColorAvailabilityInfo = () => {
 // run the function once at script startup
 removeColorAvailabilityInfo();
 
+// The designSelect addEventListener will hide/ show the correct colors 
+// that are available for the choosen shirt type, and select the first
+// available color automatically
 designSelect.addEventListener('change', (event) => {
 
     // get a list of all the color <option> elements
@@ -91,8 +79,7 @@ designSelect.addEventListener('change', (event) => {
             colorOptions[i].removeAttribute('selected');
             colorOptions[i].setAttribute('hidden', true);
         }            
-    }
-    
+    }    
     // make the updated color selection section available again
     colorSelect.removeAttribute('disabled');
 });
@@ -114,10 +101,33 @@ function getTotalCost() {
 }
 
 // The following event listener recalculates and displays the total cost each
-// time a checkbox is checked or unchecked
-activitiesFieldset.addEventListener('change', (event) => {    
+// time a checkbox is checked or unchecked. It also disables conflicting
+// activities
+activitiesFieldset.addEventListener('change', (event) => { 
     if(event.target.tagName === 'INPUT') {
-        let totalCost = getTotalCost();
+        const selectedSpans = event.target.parentNode.querySelectorAll('span');
+        const selectedActivity = selectedSpans[0].innerText;
+        const selectedTime = selectedSpans[1].innerText;
+
+        const inputs = activitiesFieldset.querySelectorAll('input');
+        for(let i = 0; i < inputs.length; i++) {
+            const spans = inputs[i].parentNode.querySelectorAll('span');
+            const activity = spans[0].innerText;
+            const time = spans[1].innerText;
+            if((time === selectedTime) && (selectedActivity !== activity)) {
+                // we found a potential conflict
+                if(event.target.checked) {
+                    inputs[i].removeAttribute('checked');
+                    inputs[i].setAttribute('disabled', true);
+                    inputs[i].parentElement.classList.add('disabled');
+                } else {
+                    inputs[i].removeAttribute('disabled');
+                    inputs[i].parentElement.classList.remove('disabled');
+                }
+            } 
+        }
+        // (re)calculate the total cost and update the displayed value
+        const totalCost = getTotalCost();
         const activitiesCost = document.getElementById('activities-cost');
         activitiesCost.innerText = `Total: $${totalCost}`;
     }
@@ -173,7 +183,7 @@ selectPaymentMethod('credit-card');
 // step 8
 // The form submit event listener does a full validation of the input fields
 // and prevents submission if some information is wrong or missing
-form.addEventListener('submit', (event) => { // DEBUG!!! must be "submit" event
+form.addEventListener('submit', (event) => { 
 
     // **Note**: these little helper functions check if the information was
     // entered correctly in the form input fields. They return true on success
@@ -254,9 +264,6 @@ form.addEventListener('submit', (event) => { // DEBUG!!! must be "submit" event
             setVisualHint(creditCardZipInput.parentNode, creditCardZipIsOk);
             setVisualHint(creditCardCVVInput.parentNode, creditCardCVVIsOk);
         }
-        
-
-
         //console.log('preventdefault called');
         event.preventDefault();
     }
@@ -287,3 +294,5 @@ function addFocusBlurEventListeners() {
 }
 // call the above function once to add the event listeners
 addFocusBlurEventListeners();
+
+
