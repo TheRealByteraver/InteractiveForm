@@ -1,10 +1,16 @@
 const form = document.querySelector('form');
 const nameInput = document.getElementById('name');
+const emailInput = document.getElementById('email');
 const otherJobRoleInput = document.getElementById('other-job-role');
 const userTitleSelect = document.getElementById('title');
 const colorSelect = document.getElementById('color');
 const designSelect = document.getElementById('design');
 const paymentSelect = document.getElementById('payment');
+const creditCardNumInput = document.getElementById('cc-num');
+const creditCardZipInput = document.getElementById('zip');
+const creditCardCVVInput = document.getElementById('cvv');
+
+
 
 // start by giving focus to the first (top left) input on the form
 nameInput.focus();
@@ -167,7 +173,7 @@ selectPaymentMethod('credit-card');
 // step 8
 // The form submit event listener does a full validation of the input fields
 // and prevents submission if some information is wrong or missing
-form.addEventListener('submit', (event) => {
+form.addEventListener('submit', (event) => { // DEBUG!!! must be "submit" event
 
     // **Note**: these little helper functions check if the information was
     // entered correctly in the form input fields. They return true on success
@@ -175,50 +181,83 @@ form.addEventListener('submit', (event) => {
 
     // A name should at least contain two characters, excluding spaces
     function isValidName() {
-        const name = document.getElementById('name').value;
-        return (name.trim().length >= 2);
+        //const name = document.getElementById('name').value;
+        return (nameInput.value.trim().length >= 2);
     }
     // Only addresses with a .com top level domain are accepted (as instructed)
     // The following email addresses will be considered valid by this function:
     // steve.clarke.2@gmail.com, john@team.treehouse.com, peter@a.com
     function isValidEmail() {
-        const email = document.getElementById('email').value;
-        return /^(\w+\.?){1,3}@(\w+\.?){1,3}\.com$/.test(email);
+        return /^(\w+\.?){1,3}@(\w+\.?){1,3}\.com$/.test(emailInput.value);
     }
-
     // The "Register for Activities" section must have at least one 
     // activity selected. This means the total cost can't be zero
     function AreActivitiesSelected() {
         return getTotalCost() > 0;
     }
-
-   // The isValidCreditCard function checks if all the credit card information
-   // was entered correctly
-    function isValidCreditCard() {
-        return (
-        // a creditcard nr should be between 13 and 16 characters long    
-        /^\d{13,16}$/.test(document.getElementById('cc-num').value) &&
-
-        // a zip code should be 5 digits long
-        /^\d{5}$/.test(document.getElementById('zip').value) &&
-
-        // a creditcard cvv code should be 3 digits long
-        /^\d{3}$/.test(document.getElementById('cvv').value) 
-        );
+    // a creditcard nr should be between 13 and 16 characters long
+    function isValidCreditCardNr() {        
+        return /^\d{13,16}$/.test(creditCardNumInput.value);
     }
+    // a zip code should be 5 digits long
+    function isValidCreditCardZip() {        
+        return /^\d{5}$/.test(creditCardZipInput.value);
+    }
+    // a creditcard CVV code should be 3 digits long
+    function isValidCreditCardCVV() {        
+        return /^\d{3}$/.test(creditCardCVVInput.value);
+    }
+
+    // The setVisualHint helper function adds or removes classes on the
+    // input elements that have (in)valid entries
+    function setVisualHint(element, isValid) {
+        element.classList.add((isValid ? '' : 'not-') + 'valid');
+        element.classList.remove((isValid ? 'not-' : '') + 'valid');
+        element.lastElementChild.style.display = (isValid ? '' : 'inline');
+    }
+
+    // Perform the checks and store the results
+    const nameIsOk = isValidName();
+    const emailIsOk = isValidEmail();
+    const activitiesAreOk = AreActivitiesSelected();
+    const creditCardNrIsOk = isValidCreditCardNr();
+    const creditCardZipIsOk = isValidCreditCardZip();
+    const creditCardCVVIsOk = isValidCreditCardCVV();    
+    const paymentIsByCreditCard = (getPaymentMethodId() === 'credit-card');
+
+    // console.log('nameIsOk = ' + isValidName());
+    // console.log('emailIsOk = ' + isValidEmail());
+    // console.log('activitiesAreOk = ' + AreActivitiesSelected());
+    // console.log('creditCardNrIsOk = ' + isValidCreditCardNr());
+    // console.log('creditCardZipIsOk = ' + isValidCreditCardZip());
+    // console.log('creditCardCVVIsOk = ' + isValidCreditCardCVV());    
+    // console.log('paymentIsByCreditCard = ' + (getPaymentMethodId() === 'credit-card'));
+
     // Check if the user filled in all the mandatory fields correctly
-    let isReadyForSubmission = 
-        isValidName() &&
-        isValidEmail() &&
-        AreActivitiesSelected();
+    let isReadyForSubmission = nameIsOk && emailIsOk && activitiesAreOk;
 
     // perform extra credit card check if that payment option was selected
-    if(getPaymentMethodId() === 'credit-card') {
-        isReadyForSubmission = isReadyForSubmission && isValidCreditCard();
+    if(paymentIsByCreditCard) {
+        isReadyForSubmission = (isReadyForSubmission && 
+            creditCardNrIsOk && creditCardZipIsOk && creditCardCVVIsOk);
     } 
 
     // The user did not enter all information correctly, prevent submission
     if(!isReadyForSubmission) {
+
+        // Add visual cues to help the user if any of the above are false
+        setVisualHint(nameInput.parentNode, nameIsOk);
+        setVisualHint(emailInput.parentNode, emailIsOk);
+        setVisualHint(activitiesFieldset, activitiesAreOk);
+        if(paymentIsByCreditCard) {
+            setVisualHint(creditCardNumInput.parentNode, creditCardNrIsOk);
+            setVisualHint(creditCardZipInput.parentNode, creditCardZipIsOk);
+            setVisualHint(creditCardCVVInput.parentNode, creditCardCVVIsOk);
+        }
+        
+
+
+        //console.log('preventdefault called');
         event.preventDefault();
     }
 });
@@ -238,7 +277,7 @@ function addFocusBlurEventListeners() {
             const label = event.target.parentElement;
             label.className = 'focus';
         });
-        
+
         // add the blur event listener
         input.addEventListener('blur', (event) => {   
             const label = event.target.parentElement;
