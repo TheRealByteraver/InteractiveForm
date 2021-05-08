@@ -82,7 +82,8 @@ designSelect.addEventListener('change', (event) => {
                 selected = true;
                 colorOptions[i].setAttribute('selected', true);
             }
-        } else {
+        } 
+        else {
             colorOptions[i].removeAttribute('selected');
             colorOptions[i].setAttribute('hidden', true);
         }            
@@ -91,7 +92,7 @@ designSelect.addEventListener('change', (event) => {
     colorSelect.removeAttribute('disabled');
 });
 
-// step 6
+// step 6 and exceeds step 1
 // This function calculates the total cost based on the checked courses
 function getTotalCost() {
     let totalCost = 0;
@@ -107,6 +108,8 @@ function getTotalCost() {
 // The following event listener recalculates and displays the total cost each
 // time a checkbox is checked or unchecked. 
 // It also disables conflicting activities (for exceeds step 1)
+// It also gives realtime validity feedback, because the other inpult fields
+// do as well.
 activitiesFieldset.addEventListener('change', (event) => { 
     if(event.target.tagName === 'INPUT') {
         const selectedSpans = event.target.parentNode.querySelectorAll('span');
@@ -125,7 +128,8 @@ activitiesFieldset.addEventListener('change', (event) => {
                     inputs[i].removeAttribute('checked');
                     inputs[i].setAttribute('disabled', true);
                     inputs[i].parentElement.classList.add('disabled');
-                } else {
+                } 
+                else {
                     inputs[i].removeAttribute('disabled');
                     inputs[i].parentElement.classList.remove('disabled');
                 }
@@ -135,6 +139,11 @@ activitiesFieldset.addEventListener('change', (event) => {
         const totalCost = getTotalCost();
         const activitiesCost = document.getElementById('activities-cost');
         activitiesCost.innerText = `Total: $${totalCost}`;
+
+        // setVisualHint acts on the parent element, but we need to add a 
+        // visual hint to the 'activitiesFieldset', hence we take 1st child
+        setVisualHint(activitiesFieldset.firstElementChild, totalCost > 0);
+
     }
 });
 
@@ -193,62 +202,104 @@ selectPaymentMethod('credit-card');
 // step 8
 // ****************************************************************************
 // **Note**: these little helper functions check if the information was
-// entered correctly in the form input fields. They return true on success
-// or false if there is missing/ wrong information
+// entered correctly in the form input fields. These functions return an object:
+// {
+//     isValid: Boolean,
+//     errorMessage: String
+// }
+// if 'isValid' is true than the 'errorMessage' is an empty string. 
+// These validator helper functions originally only returned a boolean but were
+// upgraded for the 3rd exceeds requirement
 
-// A name should at least contain two characters, excluding spaces
+// A name should contain at least 2 consecutive characters, excluding spaces
 function isValidName() {
-    return /([a-z]){2,}/i.test(nameInput.value);
+    const nameIsOk = /([a-z]){2,}/i.test(nameInput.value);
+    const errStr =
+        (nameIsOk ? '' : 'A name should contain at least 2 consecutive characters');
+    return {
+        isValid: nameIsOk,
+        errorMessage: errStr
+    };
 }
 // Only addresses with a .com top level domain are accepted (as instructed)
 // The following email addresses will be considered valid by this function:
 // steve.clarke.2@gmail.com, john@team.treehouse.com, peter@a.com
 function isValidEmail() {
-    return /^(\w+\.?){1,3}@(\w+\.?){1,3}\.com$/.test(emailInput.value);
+    const emailIsOk = /^(\w+\.?){1,3}@(\w+\.?){1,3}\.com$/.test(emailInput.value);
+    const errStr =
+        (emailIsOk ? '' : 'Please enter a valid .com e-mail address');
+    return {
+        isValid: emailIsOk,
+        errorMessage: errStr
+    };    
 }
 // The "Register for Activities" section must have at least one 
 // activity selected. This means the total cost can't be zero
 function AreActivitiesSelected() {
-    return (getTotalCost() > 0);
+    const activitySelected = (getTotalCost() > 0);
+    const errStr =
+        (activitySelected ? '' : 'Choose at least one activity');
+    return {
+        isValid: activitySelected,
+        errorMessage: errStr
+    };   
 }
 // a creditcard nr should be between 13 and 16 characters long
 function isValidccNum() {        
-    return /^\d{13,16}$/.test(ccNumInput.value);
+    const nrIsOk = /^\d{13,16}$/.test(ccNumInput.value);
+    const errStr = getCustomNumberErrorStr(ccNumInput.value, 13, 16);
+    return {
+        isValid: nrIsOk,
+        errorMessage: errStr
+    };
 }
 // a zip code should be 5 digits long
 function isValidZip() {        
-    return /^\d{5}$/.test(zipInput.value);
+    const nrIsOk = /^\d{5}$/.test(zipInput.value);
+    const errStr = getCustomNumberErrorStr(zipInput.value, 5, 5);
+    return {
+        isValid: nrIsOk,
+        errorMessage: errStr
+    };
 }
 // a creditcard CVV code should be 3 digits long
 function isValidCvv() {        
-    return /^\d{3}$/.test(cvvInput.value);
+    const nrIsOk = /^\d{3}$/.test(cvvInput.value);
+    const errStr = getCustomNumberErrorStr(cvvInput.value, 3, 3);
+    return {
+        isValid: nrIsOk,
+        errorMessage: errStr
+    };    
 }
 // The "VisualHint" helper functions add or remove classes on the 
 // ***parent element*** of the provided argument 'element'. 
 // These css classes will make it obvious if the input provided by the 
 // user was valid or not.
-// The function "isVisualHintSet" will return true if any visual hint
-// was provided previously.
-function setIsValidVisualHint(element) {
+function setIsValidVisualHint(element, customErrorStr = '') {
     const e = element.parentNode;
     e.classList.add('valid');
     e.classList.remove('not-valid');
     e.lastElementChild.style.display = '';
+    // we do not need to restore the original hint since it is not displayed
 }
-function setIsNotValidVisualHint(element) {
+function setIsNotValidVisualHint(element, customErrorStr = '') {
     const e = element.parentNode;
     e.classList.add('not-valid');
     e.classList.remove('valid');
     e.lastElementChild.style.display = 'inline';
+    if(customErrorStr.length > 0) {
+        element.nextElementSibling.innerText = customErrorStr;
+    }
 }
-function setVisualHint(element, isValid) {
-    (isValid ? setIsValidVisualHint : setIsNotValidVisualHint)(element);
+function setVisualHint(element, isValid, customErrorStr = '') {
+    (isValid ? setIsValidVisualHint : setIsNotValidVisualHint)(element, customErrorStr);
 }
+// The function "isVisualHintSet" will return true if any visual hint
+// was provided previously to the element passed as argument
 function isVisualHintSet(element) {
     const e = element.parentNode;
     return (
-        e.classList.contains('not-valid') ||
-        e.classList.contains('valid')
+        e.classList.contains('not-valid') || e.classList.contains('valid')
     );
 }
 // end of little helper functions :)
@@ -260,12 +311,12 @@ form.addEventListener('submit', (event) => {
 
     // Perform the checks and store the results in boolean variables
     // because we'll need those values twice
-    const nameIsOk = isValidName();
-    const emailIsOk = isValidEmail();
-    const activitiesAreOk = AreActivitiesSelected();
-    const creditCardNrIsOk = isValidccNum();
-    const creditCardZipIsOk = isValidZip();
-    const creditCardCVVIsOk = isValidCvv();    
+    const nameIsOk = isValidName().isValid;
+    const emailIsOk = isValidEmail().isValid;
+    const activitiesAreOk = AreActivitiesSelected().isValid;
+    const creditCardNrIsOk = isValidccNum().isValid;
+    const creditCardZipIsOk = isValidZip().isValid;
+    const creditCardCVVIsOk = isValidCvv().isValid;    
     const paymentIsByCreditCard = (getPaymentMethodId() === 'credit-card');
 
     // Check if the user filled in all the mandatory fields correctly
@@ -277,14 +328,15 @@ form.addEventListener('submit', (event) => {
             creditCardNrIsOk && creditCardZipIsOk && creditCardCVVIsOk);
     } 
 
-    // The user did not enter all information correctly, prevent submission
+    // The user did not enter all information correctly prevent submission
+    // and provide visual hints for the user where necessary
     if(!isReadyForSubmission) {
 
-        // Add visual cues to help the user if any of the above are false
+        // Add visual hints to help the user if any of the above are false
         setVisualHint(nameInput, nameIsOk);
         setVisualHint(emailInput, emailIsOk);
 
-        // setVisualHint acts on the parent element, but we need to add a 
+        // setVisualHint acts on the *parent* element, but we need to add a 
         // visual hint to the 'activitiesFieldset', hence we take 1st child
         setVisualHint(activitiesFieldset.firstElementChild, activitiesAreOk);
         if(paymentIsByCreditCard) {
@@ -298,14 +350,14 @@ form.addEventListener('submit', (event) => {
 });
 
 // step 9
-// The function addFocusBlurEventListeners adds focus and blur events to the 
-// inputs inside the <fieldset> with the id 'activities'. We need to add the
-// event listeners to each individual input element separately because the focus 
-// and blur events do not bubble up to the parent elements.
+// The function addFocusBlurEventListeners adds focus and blur event handlers 
+// to the inputs inside the <fieldset> with the id 'activities'. We need to add 
+// the event listeners to each individual input element separately because the 
+// focus and blur events do not bubble up to the parent elements.
 function addFocusBlurEventListeners() {
-    const activitiesBoxArray = document.getElementById('activities-box').children;
-    for(let i = 0; i < activitiesBoxArray.length; i++) {
-        const input = activitiesBoxArray[i].getElementsByTagName('input')[0];
+    const activitiesBoxDiv = document.getElementById('activities-box').children;
+    for(let i = 0; i < activitiesBoxDiv.length; i++) {
+        const input = activitiesBoxDiv[i].getElementsByTagName('input')[0];
 
         // add the focus event listener
         input.addEventListener('focus', (event) => {   
@@ -335,12 +387,12 @@ addFocusBlurEventListeners();
 // The updateVisualHint helper function does what is described above and
 // is the same for each event handler so we extract the logic in a separate
 // function:
-function updateVisualHint(element, isValidInput) {   
+function updateVisualHint(element, isValidInput, customErrorStr = '') {   
     if(isVisualHintSet(element)) {
         // we already set a visual hint previously, so now we can also
         // warn for invalid input, if the user changes previously valid 
         // input and the input becomes invalid for example
-        setVisualHint(element, isValidInput);            
+        setVisualHint(element, isValidInput, customErrorStr);            
     } 
     else {
         // The user is still typing in the field for "the first time"
@@ -362,12 +414,20 @@ function addInputEventhandlers(inputElement, validatorFunction) {
 
     // act on change of input
     inputElement.addEventListener('keyup', () => {
-        updateVisualHint(inputElement, validatorFunction());
+        updateVisualHint(
+            inputElement, 
+            validatorFunction().isValid, 
+            validatorFunction().errorMessage
+        );
     });
     // act on loss of focus
     inputElement.addEventListener('blur', () => {
         if(isVisualHintSet(inputElement) || hasInputData(inputElement)) {
-            setVisualHint(inputElement, validatorFunction());
+            setVisualHint(
+                inputElement, 
+                validatorFunction().isValid, 
+                validatorFunction().errorMessage
+            );
         }
     });
 }
@@ -379,7 +439,49 @@ addInputEventhandlers(zipInput, isValidZip);
 addInputEventhandlers(cvvInput, isValidCvv);
 
 
+// exceeds step 3
+// Providing additional information for certain types of errors can be very
+// helpful to your user. For example, if the email address field is empty,
+// it would be enough to inform the user that they should add an email 
+// address. But if they’ve already added an email address, but formatted it
+// incorrectly, that message wouldn’t be helpful.
 
+// For at least one required form section, provide one error message if the 
+// field fails on one of its requirements, and a separate message if it 
+// fails on one of its other requirements.
+// Detail this specific feature in your README.md file.
+
+/**
+ * possible error codes:
+ * - the number has an incorrect nr of digits
+ * - the number contains characters that are not digits
+ * - the field is not filled in at all
+ */
+
+function getCustomNumberErrorStr(numberStr, minLength, maxLength) {
+
+    // check if the number string contains characters that are not digits
+    const regex = /^\d+$/
+    const isValidNr = regex.test(numberStr);
+    const strLength = numberStr.length;
+
+    let returnStr = '';
+    if(isValidNr) {
+        if(strLength < minLength || strLength > maxLength) {
+            if(minLength !== maxLength) {
+                returnStr = `The number must be between ${minLength}` + 
+                ` and ${maxLength} digits long`;
+            } 
+            else {
+                returnStr = `The number must be ${minLength} digits long`;
+            }
+        } 
+    }
+    else {
+        returnStr = 'Please enter the number without spaces or other characters';
+    }
+    return returnStr;
+}
 
 
 
