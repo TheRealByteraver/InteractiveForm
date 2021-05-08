@@ -8,6 +8,7 @@ const otherJobRoleInput = document.getElementById('other-job-role');
 const titleSelect = document.getElementById('title');
 const colorSelect = document.getElementById('color');
 const designSelect = document.getElementById('design');
+const activitiesFieldset = document.getElementById('activities');
 const paymentSelect = document.getElementById('payment');
 const ccNumInput = document.getElementById('cc-num');
 const zipInput = document.getElementById('zip');
@@ -37,11 +38,10 @@ titleSelect.addEventListener('change', (event) => {
 // Initially disable the color select element
 colorSelect.setAttribute('disabled', true);
 
-// The function removeColorAvailabilityInfo strips the extra 
-// availability information such as '(JS Puns shirt only)' and
-// leaves only the color itself (e.g. 'Cornflower Blue'). After
-// all the availability information is only useful if javascript
-// is not available.
+// The function removeColorAvailabilityInfo strips the extra availability 
+// information such as '(JS Puns shirt only)' and leaves only the color itself
+// (e.g. 'Cornflower Blue'). After all the availability information is only 
+// useful if javascript is not available.
 function removeColorAvailabilityInfo() {
 
     // isolate the color from the string in $1
@@ -92,9 +92,6 @@ designSelect.addEventListener('change', (event) => {
 });
 
 // step 6
-// select the fieldset containing all the activity checkboxes
-const activitiesFieldset = document.getElementById('activities');
-
 // This function calculates the total cost based on the checked courses
 function getTotalCost() {
     let totalCost = 0;
@@ -201,7 +198,7 @@ selectPaymentMethod('credit-card');
 
 // A name should at least contain two characters, excluding spaces
 function isValidName() {
-    return (nameInput.value.trim().length >= 2);
+    return /([a-z]){2,}/i.test(nameInput.value);
 }
 // Only addresses with a .com top level domain are accepted (as instructed)
 // The following email addresses will be considered valid by this function:
@@ -327,22 +324,17 @@ function addFocusBlurEventListeners() {
 addFocusBlurEventListeners();
 
 // Exceeds step 2
-
-/*
-
---->>>> Detail this specific feature in your README.md file. */
-
-/* 
-    In the following event handlers, we visually confirm that the input 
-    is valid while the user is typing. We do _not_ immediately announce
-    that the user input is invalid while the user is still typing, as 
-    that would be a bit obnoxious. 
-    We DO however mark the input as invalid when the input field looses
-    focus (and the input is invalid)
-*/
-
+// In the updateVisualHint function, we visually confirm that the input 
+// is valid while the user is typing. We do _not_ immediately announce
+// that the user input is invalid while the user is still typing, as 
+// that would be a bit obnoxious. 
+// We DO however mark the input as invalid when the input field looses
+// focus (and the input is invalid), unless the input field is empty,
+// in which case we do nothing.
+//
 // The updateVisualHint helper function does what is described above and
-// is the same for each event handler so we extract the logic 
+// is the same for each event handler so we extract the logic in a separate
+// function:
 function updateVisualHint(element, isValidInput) {   
     if(isVisualHintSet(element)) {
         // we already set a visual hint previously, so now we can also
@@ -358,18 +350,21 @@ function updateVisualHint(element, isValidInput) {
         }
     }    
 }
-// This little helper will return true if the user already started typing
-// characters into the field provided by the paramter. We do not add warnings
-// to empty fields, only to fields with invalid input.
+// This little helper function will return true if the user already started 
+// typing characters into the field provided by the paramter. We do not add 
+// warnings to empty fields, only to fields with invalid input.
 function hasInputData(element) {
     return (element.value.length > 0);
 }
-// The event handlers have the same logic for every input, so we make a 
-// function for that
+// Both event handlers have the same logic for every input, so we make a 
+// function that adds them for a given input element
 function addInputEventhandlers(inputElement, validatorFunction) {
+
+    // act on change of input
     inputElement.addEventListener('keyup', () => {
         updateVisualHint(inputElement, validatorFunction());
     });
+    // act on loss of focus
     inputElement.addEventListener('blur', () => {
         if(isVisualHintSet(inputElement) || hasInputData(inputElement)) {
             setVisualHint(inputElement, validatorFunction());
@@ -383,7 +378,7 @@ addInputEventhandlers(ccNumInput, isValidccNum);
 addInputEventhandlers(zipInput, isValidZip);
 addInputEventhandlers(cvvInput, isValidCvv);
 
-// TODO: isValidName() should not accept non-alphanum chars
+
 
 
 
