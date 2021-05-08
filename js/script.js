@@ -1,40 +1,47 @@
+// As a naming convention for variables holding DOM elements we use
+// id or classname followed by html tag, all in camelCase
+
 const form = document.querySelector('form');
 const nameInput = document.getElementById('name');
 const emailInput = document.getElementById('email');
 const otherJobRoleInput = document.getElementById('other-job-role');
-const userTitleSelect = document.getElementById('title');
+const titleSelect = document.getElementById('title');
 const colorSelect = document.getElementById('color');
 const designSelect = document.getElementById('design');
 const paymentSelect = document.getElementById('payment');
-const creditCardNumInput = document.getElementById('cc-num');
-const creditCardZipInput = document.getElementById('zip');
-const creditCardCVVInput = document.getElementById('cvv');
+const ccNumInput = document.getElementById('cc-num');
+const zipInput = document.getElementById('zip');
+const cvvInput = document.getElementById('cvv');
 
+// step 3
 // start by giving focus to the first (top left) input on the form
 nameInput.focus();
 
+// step 4
 // hide the "Other Job Role" input field till its needed
 otherJobRoleInput.style.visibility = 'hidden';
 
 // The following event listener checks if the 'Other' Job Role was selected
 // among the available Job Roles. If so, it makes the 'otherJobRoleInput'
 // element visible again. If not, it hides it again
-userTitleSelect.addEventListener('change', (event) => {
+titleSelect.addEventListener('change', (event) => {
     if(event.target.value === 'other') {
         otherJobRoleInput.style.visibility = '';
-        //otherJobRoleInput.focus(); // has no effect
     }
     else {
         otherJobRoleInput.style.visibility = 'hidden';
     }
 });
 
+// step 5
 // Initially disable the color select element
 colorSelect.setAttribute('disabled', true);
 
 // The function removeColorAvailabilityInfo strips the extra 
 // availability information such as '(JS Puns shirt only)' and
-// leaves only the color itself (e.g. 'Cornflower Blue').
+// leaves only the color itself (e.g. 'Cornflower Blue'). After
+// all the availability information is only useful if javascript
+// is not available.
 function removeColorAvailabilityInfo() {
 
     // isolate the color from the string in $1
@@ -101,20 +108,21 @@ function getTotalCost() {
 }
 
 // The following event listener recalculates and displays the total cost each
-// time a checkbox is checked or unchecked. It also disables conflicting
-// activities
+// time a checkbox is checked or unchecked. 
+// It also disables conflicting activities (for exceeds step 1)
 activitiesFieldset.addEventListener('change', (event) => { 
     if(event.target.tagName === 'INPUT') {
         const selectedSpans = event.target.parentNode.querySelectorAll('span');
         const selectedActivity = selectedSpans[0].innerText;
         const selectedTime = selectedSpans[1].innerText;
-
         const inputs = activitiesFieldset.querySelectorAll('input');
+
         for(let i = 0; i < inputs.length; i++) {
             const spans = inputs[i].parentNode.querySelectorAll('span');
             const activity = spans[0].innerText;
             const time = spans[1].innerText;
             if((time === selectedTime) && (selectedActivity !== activity)) {
+
                 // we found a potential conflict
                 if(event.target.checked) {
                     inputs[i].removeAttribute('checked');
@@ -138,6 +146,8 @@ activitiesFieldset.addEventListener('change', (event) => {
 // specified in the html. We use the fact that these exact values are also 
 // present in the 'value' attribute of the <select> list with the payment 
 // options.
+// It is generated dynamically: this way the form should still work if the 
+// webdesigner adds other payment methods in the index.html file later on.
 function getPaymentIdsArray() {
     const paymentSelectOptions = paymentSelect.children;
     const paymentIds = [];
@@ -147,6 +157,8 @@ function getPaymentIdsArray() {
     }
     return paymentIds;
 };
+
+// create the array with the payment methods id strings
 const paymentOptions = getPaymentIdsArray();
 
 // set the credit card option as the default
@@ -161,8 +173,9 @@ function getPaymentMethodId() {
 }
 
 // The function selectPaymentMethod hides all payment method input & info 
-// fields except for the one that has an id provided by the argument
-function selectPaymentMethod(paymentId) {
+// fields except for the one currently active one
+function selectPaymentMethod() {
+
     // hide all fields. We skip the first payment Option as it is not
     // a real payment option
     for( let i = 1; i < paymentOptions.length; i++ ) {
@@ -181,72 +194,87 @@ payment.addEventListener('change', (event) => {
 selectPaymentMethod('credit-card');
 
 // step 8
+// ****************************************************************************
+// **Note**: these little helper functions check if the information was
+// entered correctly in the form input fields. They return true on success
+// or false if there is missing/ wrong information
+
+// A name should at least contain two characters, excluding spaces
+function isValidName() {
+    return (nameInput.value.trim().length >= 2);
+}
+// Only addresses with a .com top level domain are accepted (as instructed)
+// The following email addresses will be considered valid by this function:
+// steve.clarke.2@gmail.com, john@team.treehouse.com, peter@a.com
+function isValidEmail() {
+    return /^(\w+\.?){1,3}@(\w+\.?){1,3}\.com$/.test(emailInput.value);
+}
+// The "Register for Activities" section must have at least one 
+// activity selected. This means the total cost can't be zero
+function AreActivitiesSelected() {
+    return (getTotalCost() > 0);
+}
+// a creditcard nr should be between 13 and 16 characters long
+function isValidccNum() {        
+    return /^\d{13,16}$/.test(ccNumInput.value);
+}
+// a zip code should be 5 digits long
+function isValidZip() {        
+    return /^\d{5}$/.test(zipInput.value);
+}
+// a creditcard CVV code should be 3 digits long
+function isValidCvv() {        
+    return /^\d{3}$/.test(cvvInput.value);
+}
+// The "VisualHint" helper functions add or remove classes on the 
+// ***parent element*** of the provided argument 'element'. 
+// These css classes will make it obvious if the input provided by the 
+// user was valid or not.
+// The function "isVisualHintSet" will return true if any visual hint
+// was provided previously.
+function setIsValidVisualHint(element) {
+    const e = element.parentNode;
+    e.classList.add('valid');
+    e.classList.remove('not-valid');
+    e.lastElementChild.style.display = '';
+}
+function setIsNotValidVisualHint(element) {
+    const e = element.parentNode;
+    e.classList.add('not-valid');
+    e.classList.remove('valid');
+    e.lastElementChild.style.display = 'inline';
+}
+function setVisualHint(element, isValid) {
+    (isValid ? setIsValidVisualHint : setIsNotValidVisualHint)(element);
+}
+function isVisualHintSet(element) {
+    const e = element.parentNode;
+    return (
+        e.classList.contains('not-valid') ||
+        e.classList.contains('valid')
+    );
+}
+// end of little helper functions :)
+// ****************************************************************************
+
 // The form submit event listener does a full validation of the input fields
 // and prevents submission if some information is wrong or missing
 form.addEventListener('submit', (event) => { 
 
-    // **Note**: these little helper functions check if the information was
-    // entered correctly in the form input fields. They return true on success
-    // or false if there is missing/ wrong information
-
-    // A name should at least contain two characters, excluding spaces
-    function isValidName() {
-        //const name = document.getElementById('name').value;
-        return (nameInput.value.trim().length >= 2);
-    }
-    // Only addresses with a .com top level domain are accepted (as instructed)
-    // The following email addresses will be considered valid by this function:
-    // steve.clarke.2@gmail.com, john@team.treehouse.com, peter@a.com
-    function isValidEmail() {
-        return /^(\w+\.?){1,3}@(\w+\.?){1,3}\.com$/.test(emailInput.value);
-    }
-    // The "Register for Activities" section must have at least one 
-    // activity selected. This means the total cost can't be zero
-    function AreActivitiesSelected() {
-        return getTotalCost() > 0;
-    }
-    // a creditcard nr should be between 13 and 16 characters long
-    function isValidCreditCardNr() {        
-        return /^\d{13,16}$/.test(creditCardNumInput.value);
-    }
-    // a zip code should be 5 digits long
-    function isValidCreditCardZip() {        
-        return /^\d{5}$/.test(creditCardZipInput.value);
-    }
-    // a creditcard CVV code should be 3 digits long
-    function isValidCreditCardCVV() {        
-        return /^\d{3}$/.test(creditCardCVVInput.value);
-    }
-
-    // The setVisualHint helper function adds or removes classes on the
-    // input elements that have (in)valid entries
-    function setVisualHint(element, isValid) {
-        element.classList.add((isValid ? '' : 'not-') + 'valid');
-        element.classList.remove((isValid ? 'not-' : '') + 'valid');
-        element.lastElementChild.style.display = (isValid ? '' : 'inline');
-    }
-
-    // Perform the checks and store the results
+    // Perform the checks and store the results in boolean variables
+    // because we'll need those values twice
     const nameIsOk = isValidName();
     const emailIsOk = isValidEmail();
     const activitiesAreOk = AreActivitiesSelected();
-    const creditCardNrIsOk = isValidCreditCardNr();
-    const creditCardZipIsOk = isValidCreditCardZip();
-    const creditCardCVVIsOk = isValidCreditCardCVV();    
+    const creditCardNrIsOk = isValidccNum();
+    const creditCardZipIsOk = isValidZip();
+    const creditCardCVVIsOk = isValidCvv();    
     const paymentIsByCreditCard = (getPaymentMethodId() === 'credit-card');
-
-    // console.log('nameIsOk = ' + isValidName());
-    // console.log('emailIsOk = ' + isValidEmail());
-    // console.log('activitiesAreOk = ' + AreActivitiesSelected());
-    // console.log('creditCardNrIsOk = ' + isValidCreditCardNr());
-    // console.log('creditCardZipIsOk = ' + isValidCreditCardZip());
-    // console.log('creditCardCVVIsOk = ' + isValidCreditCardCVV());    
-    // console.log('paymentIsByCreditCard = ' + (getPaymentMethodId() === 'credit-card'));
 
     // Check if the user filled in all the mandatory fields correctly
     let isReadyForSubmission = nameIsOk && emailIsOk && activitiesAreOk;
 
-    // perform extra credit card check if that payment option was selected
+    // perform extra credit card checks if that payment option was selected
     if(paymentIsByCreditCard) {
         isReadyForSubmission = (isReadyForSubmission && 
             creditCardNrIsOk && creditCardZipIsOk && creditCardCVVIsOk);
@@ -256,15 +284,18 @@ form.addEventListener('submit', (event) => {
     if(!isReadyForSubmission) {
 
         // Add visual cues to help the user if any of the above are false
-        setVisualHint(nameInput.parentNode, nameIsOk);
-        setVisualHint(emailInput.parentNode, emailIsOk);
-        setVisualHint(activitiesFieldset, activitiesAreOk);
+        setVisualHint(nameInput, nameIsOk);
+        setVisualHint(emailInput, emailIsOk);
+
+        // setVisualHint acts on the parent element, but we need to add a 
+        // visual hint to the 'activitiesFieldset', hence we take 1st child
+        setVisualHint(activitiesFieldset.firstElementChild, activitiesAreOk);
         if(paymentIsByCreditCard) {
-            setVisualHint(creditCardNumInput.parentNode, creditCardNrIsOk);
-            setVisualHint(creditCardZipInput.parentNode, creditCardZipIsOk);
-            setVisualHint(creditCardCVVInput.parentNode, creditCardCVVIsOk);
+            setVisualHint(ccNumInput, creditCardNrIsOk);
+            setVisualHint(zipInput, creditCardZipIsOk);
+            setVisualHint(cvvInput, creditCardCVVIsOk);
         }
-        //console.log('preventdefault called');
+        // prevent form submission, the user needs to correct things first
         event.preventDefault();
     }
 });
@@ -294,5 +325,67 @@ function addFocusBlurEventListeners() {
 }
 // call the above function once to add the event listeners
 addFocusBlurEventListeners();
+
+// Exceeds step 2
+
+/*
+
+--->>>> Detail this specific feature in your README.md file. */
+
+/* 
+    In the following event handlers, we visually confirm that the input 
+    is valid while the user is typing. We do _not_ immediately announce
+    that the user input is invalid while the user is still typing, as 
+    that would be a bit obnoxious. 
+    We DO however mark the input as invalid when the input field looses
+    focus (and the input is invalid)
+*/
+
+// The updateVisualHint helper function does what is described above and
+// is the same for each event handler so we extract the logic 
+function updateVisualHint(element, isValidInput) {   
+    if(isVisualHintSet(element)) {
+        // we already set a visual hint previously, so now we can also
+        // warn for invalid input, if the user changes previously valid 
+        // input and the input becomes invalid for example
+        setVisualHint(element, isValidInput);            
+    } 
+    else {
+        // The user is still typing in the field for "the first time"
+        // so we only affirm valid input as soon as the input is valid
+        if(isValidInput) {
+            setIsValidVisualHint(element);
+        }
+    }    
+}
+// This little helper will return true if the user already started typing
+// characters into the field provided by the paramter. We do not add warnings
+// to empty fields, only to fields with invalid input.
+function hasInputData(element) {
+    return (element.value.length > 0);
+}
+// The event handlers have the same logic for every input, so we make a 
+// function for that
+function addInputEventhandlers(inputElement, validatorFunction) {
+    inputElement.addEventListener('keyup', () => {
+        updateVisualHint(inputElement, validatorFunction());
+    });
+    inputElement.addEventListener('blur', () => {
+        if(isVisualHintSet(inputElement) || hasInputData(inputElement)) {
+            setVisualHint(inputElement, validatorFunction());
+        }
+    });
+}
+// Add the event handlers to the applicable input fields
+addInputEventhandlers(nameInput, isValidName);
+addInputEventhandlers(emailInput, isValidEmail);
+addInputEventhandlers(ccNumInput, isValidccNum);
+addInputEventhandlers(zipInput, isValidZip);
+addInputEventhandlers(cvvInput, isValidCvv);
+
+// TODO: isValidName() should not accept non-alphanum chars
+
+
+
 
 
