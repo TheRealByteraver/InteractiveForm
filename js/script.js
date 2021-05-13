@@ -63,11 +63,7 @@ function removeColorAvailabilityInfo() {
 // run the function once at script startup
 removeColorAvailabilityInfo();
 
-// The designSelect addEventListener will hide/ show the correct colors 
-// that are available for the choosen shirt type, and select the first
-// available color automatically
-designSelect.addEventListener('change', (event) => {
-
+function hideUnavailableColors(targetElement) {
     // get a list of all the color <option> elements
     const colorOptions = colorSelect.querySelectorAll('option');
 
@@ -76,7 +72,7 @@ designSelect.addEventListener('change', (event) => {
 
     // show the ones that correspond to the user-choosen theme
     for(let i = 0; i < colorOptions.length; i++) {
-        if(colorOptions[i].dataset.theme === event.target.value) {
+        if(colorOptions[i].dataset.theme === targetElement.value) {
             colorOptions[i].removeAttribute('hidden');
             if(!selected) {
                 selected = true;
@@ -90,7 +86,18 @@ designSelect.addEventListener('change', (event) => {
     }    
     // make the updated color selection section available again
     colorSelect.removeAttribute('disabled');
+}
+
+// The designSelect addEventListener will hide/ show the correct colors 
+// that are available for the choosen shirt type, and select the first
+// available color automatically
+designSelect.addEventListener('change', (event) => {
+    hideUnavailableColors(event.target);
 });
+
+// designSelect.addEventListener('focus', (event) => {
+//     hideUnavailableColors(event.target);
+// });
 
 // step 6 and exceeds step 1
 // This function calculates the total cost based on the checked courses
@@ -403,7 +410,7 @@ function updateVisualHint(element, isValidInput, customErrorStr = '') {
     }    
 }
 // This little helper function will return true if the user already started 
-// typing characters into the field provided by the paramter. We do not add 
+// typing characters into the field provided by the parameter. We do not add
 // warnings to empty fields, only to fields with invalid input.
 function hasInputData(element) {
     return (element.value.length > 0);
@@ -438,26 +445,13 @@ addInputEventhandlers(ccNumInput, isValidccNum);
 addInputEventhandlers(zipInput, isValidZip);
 addInputEventhandlers(cvvInput, isValidCvv);
 
-
 // exceeds step 3
-// Providing additional information for certain types of errors can be very
-// helpful to your user. For example, if the email address field is empty,
-// it would be enough to inform the user that they should add an email 
-// address. But if they’ve already added an email address, but formatted it
-// incorrectly, that message wouldn’t be helpful.
-
-// For at least one required form section, provide one error message if the 
-// field fails on one of its requirements, and a separate message if it 
-// fails on one of its other requirements.
-// Detail this specific feature in your README.md file.
-
-/**
- * possible error codes:
- * - the number has an incorrect nr of digits
- * - the number contains characters that are not digits
- * - the field is not filled in at all
- */
-
+// The function below evaluates a string that should contain a number
+// of a certain amount of digits and returns an error string (empty if no 
+// error).
+// possible error codes:
+// - the number has an incorrect nr of digits
+// - the number contains characters that are not digits
 function getCustomNumberErrorStr(numberStr, minLength, maxLength) {
 
     // check if the number string contains characters that are not digits
